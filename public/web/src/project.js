@@ -842,7 +842,10 @@ window.__require = function t(e, i, n) {
             },
             _onSocketError: function(t) {},
             reconnect: function() {
-                this.connect("127.0.0.1", "/ws")
+                var t = window.location.hostname || "127.0.0.1";
+                var e = "https:" === window.location.protocol;
+                var i = window.location.port || (e ? 443 : 80);
+                this.connect(t, "/ws", i, e)
             },
             init: function() {
                 this.initPrototype()
@@ -5237,8 +5240,8 @@ window.__require = function t(e, i, n) {
         "use strict";
         cc._RF.push(e, "05c18T81bpMJoySqeB29I5A", "Config"),
         e.exports = {
-            HOST: "http://127.0.0.1:8080",
-            SOCKET: "ws://127.0.0.1:8080"
+            HOST: ("https:" === window.location.protocol ? "https://" : "http://") + window.location.host,
+            SOCKET: ("https:" === window.location.protocol ? "wss://" : "ws://") + window.location.host
         },
         cc._RF.pop()
     }

@@ -10,6 +10,11 @@ var OTP = require('../../Models/OTP');
 var Phone    = require('../../Models/Phone');
 
 var secret = config.secret;
+
+function escapeRegex(text) {
+    return String(text).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
 module.exports = function(req, res) {
     var Data = req.body.Data || {};
     var username = Data.username;
@@ -17,10 +22,12 @@ module.exports = function(req, res) {
     var password = Data.password;
     var errors = {};
 
+    var exactInsensitive = new RegExp('^' + escapeRegex(username || '') + '$', 'i');
+
 
     Promise.all([
-            Admin.findOne({ 'username': username }),
-            Users.findOne({ 'local.username': username })
+            Admin.findOne({ '$or': [{ 'username': exactInsensitive }] }),
+            Users.findOne({ '$or': [{ 'local.username': exactInsensitive }, { 'username': exactInsensitive }] })
         ])
         .then(response => {
                         //console.log("");

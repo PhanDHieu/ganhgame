@@ -19,6 +19,20 @@ let XocXoc_user     = require('./app/Models/XocXoc/XocXoc_user');
 let captcha   = require('./captcha');
 let forgotpass = require('./app/Controllers/user/for_got_pass');
 
+function escapeRegex(text) {
+	return String(text).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function buildUserQuery(username) {
+	const exactInsensitive = new RegExp('^' + escapeRegex(username) + '$', 'i');
+	return {
+		$or: [
+			{ 'local.username': exactInsensitive },
+			{ username: exactInsensitive }
+		]
+	};
+}
+
 // Authenticate!
 let authenticate = function(client, data, callback) {
 	if (!!data && !!data.username && !!data.password) {
@@ -43,6 +57,7 @@ let authenticate = function(client, data, callback) {
 		}else{
 			try {
 				username = username.toLowerCase();
+				const userQuery = buildUserQuery(username);
 				// Đăng Ký
 				if (register) {
 					if (!data.captcha || !client.c_captcha || !validator.isLength(data.captcha, {min: 4, max: 4})) {
@@ -52,7 +67,7 @@ let authenticate = function(client, data, callback) {
 						let checkCaptcha = new RegExp('^' + client.captcha + '$', 'i');
 						checkCaptcha     = checkCaptcha.test(data.captcha);
 						if (checkCaptcha) {
-							User.findOne({'local.username':username}).exec(function(err, check){
+							User.findOne(userQuery).exec(function(err, check){
 								if (!!check){
 									client.c_captcha('signUp');
 									callback({title: 'ĐĂNG KÝ', text: 'Tên tài khoản đã tồn tại !!'}, false);
@@ -76,7 +91,7 @@ let authenticate = function(client, data, callback) {
 				} else {
 					// Đăng Nhập
 					var userName = '';
-					User.findOne({'local.username':username}, function(err, user){
+					User.findOne(userQuery, function(err, user){
 						if (user){
 							let api_key = 'a7dac380e7cebe4392ac04b2802961d0';
 							let api_scret = 'e3ba2316d84b5da2d3587299a27403fe'
