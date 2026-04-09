@@ -4,11 +4,21 @@ require('dotenv').config();
 var cors = require('cors');
 
 let Telegram = require('node-telegram-bot-api');
-let TelegramToken = '1359141283:AAEMQ-iws4XdsG0XiajuaCmBjkNKOTkfV_I';
-// let TelegramToken = '1094426496:AAGdlkqAe9zjYkUhlgHK4F6DoS-fwU1fuvA';
-//let TelegramToken = "1147607934:AAEsypTJsy_agatrnnmHlMNPvbNaBeB4zZM";
-
-let TelegramBot = new Telegram(TelegramToken, { polling: true });
+let TelegramToken = process.env.TELEGRAM_TOKEN || '';
+let TelegramBot = null;
+if (TelegramToken) {
+    TelegramBot = new Telegram(TelegramToken, { polling: true });
+    TelegramBot.on('polling_error', (error) => {
+        let message = (error && error.message) ? error.message : '';
+        // Silence invalid/expired token spam, keep other polling errors visible.
+        if (error && error.code === 'ETELEGRAM' && message.indexOf('401 Unauthorized') !== -1) {
+            return;
+        }
+        console.error('Telegram polling error:', message || (error && error.code) || 'unknown');
+    });
+} else {
+    console.log('TELEGRAM_TOKEN is empty, skip Telegram polling.');
+}
 let express = require('express');
 let app = express();
 app.use(cors({
@@ -72,7 +82,9 @@ require('./config/Cron')();
 
 require('./update')();
 
-require('./app/Telegram/Telegram')(TelegramBot); // Telegram Bot
+if (TelegramBot) {
+    require('./app/Telegram/Telegram')(TelegramBot); // Telegram Bot
+}
 
 app.listen(port, function() {
     console.log("Server listen on port ", port);

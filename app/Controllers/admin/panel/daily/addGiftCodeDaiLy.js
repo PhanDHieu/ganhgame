@@ -1,6 +1,17 @@
 var GiftCode = require('../../../../Models/GiftCode');
 var Helper = require('../../../../Helpers/Helpers');
 
+function parseExpiryDate(day, month, year) {
+    var parsedDay = parseInt(day, 10);
+    var parsedMonth = parseInt(month, 10);
+    var parsedYear = parseInt(year, 10);
+    if (!Number.isFinite(parsedDay) || !Number.isFinite(parsedMonth) || !Number.isFinite(parsedYear)) {
+        return null;
+    }
+    var expiresAt = new Date(parsedYear, parsedMonth - 1, parsedDay + 1, 0, 0, 0, 0);
+    return Number.isNaN(expiresAt.getTime()) ? null : expiresAt;
+}
+
 module.exports = function(req, res) {
     const { body } = req || {}
     const { Data } = body || {}
@@ -12,6 +23,17 @@ module.exports = function(req, res) {
     var nam = parseInt(ngaythangSp[0]);
     var thang = parseInt(ngaythangSp[1]);
     var ngay = parseInt(ngaythangSp[2]);
+    var expiresAt = parseExpiryDate(ngay, thang, nam);
+    if (!expiresAt) {
+        res.json({
+            status: 200,
+            success: false,
+            data: {
+                message: 'Ngày hết hạn không hợp lệ.'
+            }
+        });
+        return;
+    }
     console.log(ngay+'-'+thang+'-'+nam)
     var rawData = [];
     var code = voucher_codes.generate({
@@ -26,7 +48,7 @@ module.exports = function(req, res) {
             'xu': 100000,
             'type': 'GC001',
             'date': new Date(),
-            'todate': new Date(nam, thang-1, ngay),
+            'todate': expiresAt,
             'forAgent': daily,
             'uid': null
         });

@@ -20,10 +20,9 @@ module.exports = function(client, data){
 
 				GiftCode.findOne({'code':code}, {}, function(err, check) {
 					if (!!check) {
-						var d1 = Date.parse(new Date());
-						var d2 = Date.parse(check.todate);
-						if (d2 > d1) {
-							if (null !== check.uid) {
+								var expiresAt = check.todate ? new Date(check.todate).getTime() : NaN;
+								if (Number.isFinite(expiresAt) && expiresAt > Date.now()) {
+									if (check.uid != null) {
 								client.red({notice:{title:'THẤT BẠI',text:'Mã Gift Code đã qua sử dụng.' + '\n' + ' Hãy thử một mã khác...'}});
 							}else{
 								if (validator.isEmpty(check.type)) {
@@ -47,7 +46,7 @@ module.exports = function(client, data){
 								}
 							}
 						}else{
-							client.red({notice:{title:'THẤT BẠI',text:'Mã Gift Code Đã hết hạn...!!'}});
+							client.red({notice:{title:'THẤT BẠI',text:'Mã Gift Code Đã hết hạn hoặc ngày hết hạn không hợp lệ...!!'}});
 						}
 					}else{
 						client.red({notice:{title:'THẤT BẠI',text:'Mã Gift Code không tồn tại...!!'}});

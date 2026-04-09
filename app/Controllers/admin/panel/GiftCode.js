@@ -3,6 +3,17 @@ var validator = require('validator');
 var shortid   = require('shortid');
 var GiftCode  = require('../../../Models/GiftCode');
 
+function parseExpiryDate(day, month, year) {
+	var parsedDay = parseInt(day, 10);
+	var parsedMonth = parseInt(month, 10);
+	var parsedYear = parseInt(year, 10);
+	if (!Number.isFinite(parsedDay) || !Number.isFinite(parsedMonth) || !Number.isFinite(parsedYear)) {
+		return null;
+	}
+	var expiresAt = new Date(parsedYear, parsedMonth - 1, parsedDay + 1, 0, 0, 0, 0);
+	return Number.isNaN(expiresAt.getTime()) ? null : expiresAt;
+}
+
 function get_data(client, data){
 	if (!!data && !!data.page) {
 		var page  = data.page>>0;
@@ -32,9 +43,11 @@ function create_gift(client, data){
 			var red      = data.red>>0;
 			var xu       = data.xu>>0;
 			var type     = data.chung;
-			var ngay     = (data.ngay>>0)+1;
-			var thang    = (data.thang>>0)-1;
-			var nam      = data.nam>>0;
+			var expiresAt = parseExpiryDate(data.ngay, data.thang, data.nam);
+			if (!expiresAt) {
+				client.red({notice:{title:'THẤT BẠI',text:'Ngày hết hạn không hợp lệ...'}});
+				return;
+			}
 
 			giftcode = giftcode.toLowerCase();
 
@@ -43,7 +56,7 @@ function create_gift(client, data){
 					client.red({notice:{title:'THẤT BẠI',text:'Mã GiftCode đã tồn tại...'}});
 				}else{
 					try {
-						GiftCode.create({'code':giftcode, 'red':red, 'xu':xu, 'type':type, 'date': new Date(), 'todate': new Date(nam, thang, ngay)}, function(errgift, gift){
+						GiftCode.create({'code':giftcode, 'red':red, 'xu':xu, 'type':type, 'date': new Date(), 'todate': expiresAt, 'uid': null}, function(errgift, gift){
 							if (!!gift){
 								GiftCode.estimatedDocumentCount().exec(function(err, total){
 									GiftCode.find({}, {}, {sort:{'_id':-1}, skip: 0, limit: 10}, function(err, result) {
