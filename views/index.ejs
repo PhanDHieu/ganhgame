@@ -26,8 +26,8 @@
 	<meta name="360-fullscreen" content="true"/>
 	
 	<!-- force screen orientation on some browser -->
-	<meta name="screen-orientation" content=""/>
-	<meta name="x5-orientation" content="">
+	<meta name="screen-orientation" content="landscape"/>
+	<meta name="x5-orientation" content="landscape">
 
 	<!--fix fireball/issues/3568 -->
 	<!--<meta name="browsermode" content="application">-->
@@ -35,10 +35,41 @@
 
 	<link rel="shortcut icon" href="/favicon.ico">
 
-	<link rel="stylesheet" type="text/css" href="style.css"/>
+	<link rel="stylesheet" type="text/css" href="style-mobile.css"/>
+	<style>
+		#rotate-device-tip {
+			display: none;
+			position: fixed;
+			inset: 0;
+			background: rgba(0, 0, 0, 0.92);
+			color: #fff;
+			font-family: Helvetica, Arial, sans-serif;
+			font-size: 18px;
+			line-height: 1.4;
+			z-index: 9999;
+			align-items: center;
+			justify-content: center;
+			text-align: center;
+			padding: 24px;
+			box-sizing: border-box;
+		}
+
+		@media screen and (max-width: 1024px) and (orientation: portrait) {
+			#rotate-device-tip {
+				display: flex;
+			}
+
+			#GameCanvas,
+			#splash,
+			#Cocos2dGameContainer {
+				visibility: hidden;
+			}
+		}
+	</style>
 
 </head>
 <body>
+	<div id="rotate-device-tip">Vui long xoay ngang man hinh de choi game tot hon.</div>
 	<canvas id="GameCanvas" oncontextmenu="event.preventDefault()" tabindex="0"></canvas>
 	<div id="splash">
 		<div class="progress-bar stripes">
@@ -56,6 +87,18 @@
 
 <script type="text/javascript">
 (function () {
+		var isMobile = /Android|iPhone|iPad|iPod|IEMobile|Opera Mini|Mobile/i.test(navigator.userAgent || '');
+		if (isMobile) {
+			var lockLandscape = function () {
+				if (screen.orientation && typeof screen.orientation.lock === 'function') {
+					screen.orientation.lock('landscape').catch(function () {});
+				}
+			};
+
+			document.addEventListener('touchstart', lockLandscape, { once: true, passive: true });
+			document.addEventListener('click', lockLandscape, { once: true, passive: true });
+		}
+
 		// open web debugger console
 		if (typeof VConsole !== 'undefined') {
 				window.vConsole = new VConsole();
